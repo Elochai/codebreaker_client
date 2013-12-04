@@ -1,0 +1,1 @@
+This is client app for Codebreaker game.
