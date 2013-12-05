@@ -1,12 +1,11 @@
 require 'codebreaker'
 class Client
-  attr_accessor :turns_made, :hint
+  attr_accessor :turns_made, :allow_hint, :output
   attr_reader :turns, :game, :guess
 
   def initialize
     @output = {welcome: "Welcome to Codebreaker game!\nEnter command below:",
-      commands: "Type 'guess' to enter your code\nType 'hint' to reveal one random number of secret code\n
-      Type 'commands' to see all game commands\nType 'exit' or 'quit' to close this app"}
+      commands: "Type 'guess' to enter your code\nType 'hint' to reveal one random number of secret code\nType 'commands' to see all game commands\nType 'exit' or 'quit' to close this app"}
     @turns = 10
     @turns_made = 0
     @allow_hint = true
@@ -17,7 +16,6 @@ class Client
   def start
     if @game.valid?
       puts @output[:welcome]
-      puts @game.code
       enter_command
     else
       raise "Invalid generated code. Game will be closed..."
@@ -111,8 +109,6 @@ class Client
       puts "You have alredy used your hint"
     end
   end
-
 end
-game = Client.new
-puts game.start
+
 
