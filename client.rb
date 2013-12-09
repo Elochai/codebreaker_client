@@ -49,12 +49,13 @@ class Client
           exit
         when /^hint$/
           give_hint
-          enter_command
-        when /^exit$|^quit$/
-          exit
-        else
-          @game.guess(guess_code)
+          enter_code
+        when /^[1-6]{4}$/
+          @game.guess_code = guess_code
           compare
+        else
+          puts "Can't understand..."
+          enter_code
       end
   end
 
@@ -86,11 +87,12 @@ class Client
       when /^n$|^no$/
         exit
       else
-        puts "Can't understand"
+        puts "Can't understand..."
         restart
       end
   end
 
+  private
   def save
     puts "Enter your name"
     name = gets
@@ -101,9 +103,10 @@ class Client
     puts "Game saved!"
   end
 
+  private
   def give_hint
     if @allow_hint
-      puts "One of numbers is #{@game.give_hint}, good luck ;)"
+      puts "One of the numbers is #{@game.give_hint}, good luck ;)"
       @allow_hint = false
     else
       puts "You have alredy used your hint"
