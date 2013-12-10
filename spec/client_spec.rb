@@ -29,18 +29,42 @@ require 'codebreaker'
         allow(subject).to receive(:enter_command)
         expect {subject.start}.to_not raise_error
       end
-      it "puts welocme message" do
-        allow(subject).to receive(:enter_command)
-        expect(subject).to receive(:puts).with("Welcome to Codebreaker game!\nEnter command below:")
+      it "puts welcome message" do
+        allow(subject).to receive(:print)
+        expect(subject).to receive(:puts).with(subject.output[:welcome])
         subject.start
       end
       it "calls 'enter_command' method" do
-        expect(subject).to receive(:enter_command)
+        expect(subject).to receive(:print)
         subject.start
       end
       it "validate incorrect generated code and raise error" do
         subject.game.code = "16345"
         expect {subject.start}.to raise_error
+      end
+    end
+
+    context "#print" do
+      it "prints that you can enter command" do
+        allow(subject).to receive(:enter_command)
+        expect(subject).to receive(:puts).with(subject.output[:input])
+        subject.print
+      end
+      it "calls 'enter_command' method" do
+        expect(subject).to receive(:enter_command)
+        subject.print
+      end
+      context "when called from 'enter_code' method" do
+        before {subject.instance_variable_set(:@input_code,true)}
+        it "prints that you can enter code" do
+          allow(subject).to receive(:enter_code)
+          expect(subject).to receive(:puts).with("Enter 4 numbers, each from 1 to 6 (#{subject.turns-subject.turns_made} turns remained):")
+          subject.print
+        end
+        it "calls 'enter_code' method" do
+          expect(subject).to receive(:enter_code)
+          subject.print
+        end
       end
     end
 
@@ -54,18 +78,18 @@ require 'codebreaker'
       end
       context "when typed 'hint'" do
         it "calls 'give_hint' method" do
-          #allow(subject).to receive(:gets).and_return("hint")
-          #allow(subject).to receive(:enter_command)
-          #expect(subject).to receive(:give_hint)
-          #subject.enter_command
+          allow(subject).to receive(:gets).and_return("hint")
+          allow(subject).to receive(:print)
+          expect(subject).to receive(:give_hint)
+          subject.enter_command
         end
       end
       context "when typed 'commands'" do
         it "shows commands" do
-          #allow(subject).to receive(:gets).and_return("commands")
-          #allow(subject).to receive(:enter_command)
-          #expect(subject).to receive(:puts).with("Type 'guess' to enter your code\nType 'hint' to reveal one random number of secret code\nType 'commands' to see all game commands\nType 'exit' or 'quit' to close this app")
-         # subject.enter_command
+          allow(subject).to receive(:gets).and_return("commands")
+          allow(subject).to receive(:print)
+          expect(subject).to receive(:puts).with(subject.output[:commands])
+          subject.enter_command
         end
       end
       context "when typed 'exit'" do
@@ -77,10 +101,10 @@ require 'codebreaker'
       end
       context "when typed anything else" do
         it "puts 'Wrong command!'" do
-          #allow(subject).to receive(:gets).and_return("asf")
-          #allow(subject).to receive(:enter_command)
-          #expect(subject).to receive(:puts).with("Wrong command!")
-          #subject.enter_command
+          allow(subject).to receive(:gets).and_return("asf")
+          allow(subject).to receive(:print)
+          expect(subject).to receive(:puts).with("Wrong command!")
+          subject.enter_command
         end
       end
     end
@@ -88,10 +112,10 @@ require 'codebreaker'
     context "#enter_code" do
         context "when typed 'hint'" do
         it "calls 'give_hint' method" do
-          #allow(subject).to receive(:gets).and_return("hint")
-          #allow(subject).to receive(:enter_code)
-          #expect(subject).to receive(:give_hint)
-          #subject.enter_code
+          allow(subject).to receive(:gets).and_return("hint")
+          allow(subject).to receive(:print)
+          expect(subject).to receive(:give_hint)
+          subject.enter_code
         end
       end
       context "when typed 4 numbers from 1 to 6" do
@@ -119,9 +143,10 @@ require 'codebreaker'
 
     context "#compare" do
       it "increases 'turns_made' var by 1" do
+        subject.instance_variable_set(:@turns_made,0)
         allow(subject).to receive(:enter_code)
-        expect {subject.compare}.to change {subject.turns_made}.by(1) 
         subject.compare
+        expect(subject.turns_made).to eq(1)
       end
       context "when player have turns" do
         it "calls 'enter_code' method" do
@@ -130,7 +155,7 @@ require 'codebreaker'
         end
       end
       context "when player have no turns" do
-        before {subject.turns_made = 11}
+        before {subject.instance_variable_set(:@turns_made,11)}
         it "tells that player lose and reveal the code" do
           allow(subject).to receive(:restart)
           allow(subject).to receive(:enter_code)
@@ -144,7 +169,7 @@ require 'codebreaker'
         end
       end
       context "when player wins" do
-        before {subject.turns_made = 1}
+        before {subject.instance_variable_set(:@turns_made,1)}
         it "tells that player win" do
           subject.game.code = "1234"
           subject.game.guess_code = "1234"
@@ -182,18 +207,18 @@ require 'codebreaker'
       end
       context "when typed 'y'" do
         it "sets 'allow_hint' var to 'true'" do
-          subject.allow_hint = false
+          subject.instance_variable_set(:@allow_hint,false)
           allow(subject).to receive(:gets).and_return("y")
           allow(subject).to receive(:start)
-          expect {subject.restart}.to change {subject.allow_hint}.to(true)
           subject.restart
+          expect(subject.allow_hint).to eq(true)
         end
         it "sets 'turns_made' var to zero" do
-          subject.turns_made = 10
+          subject.instance_variable_set(:@turns_made,10)
           allow(subject).to receive(:gets).and_return("y")
           allow(subject).to receive(:start)
-          expect {subject.restart}.to change {subject.turns_made}.to(0)
           subject.restart
+          expect(subject.turns_made).to eq(0)
         end
         it "sets new 'Game' object" do
           old_game = subject.game
@@ -241,10 +266,12 @@ require 'codebreaker'
     context "#give_hint" do
       context "called first time" do
         it "set 'allow_hint' var to 'false'" do
-          expect {subject.send(:give_hint)}.to change {subject.allow_hint}.to(false)
+          subject.instance_variable_set(:@allow_hint,true)
+          subject.send(:give_hint)
+          expect(subject.allow_hint).to eq(false) 
         end
         it "reveals one number to player" do
-          subject.allow_hint = true
+          subject.instance_variable_set(:@allow_hint,true)
           allow(subject.game).to receive(:give_hint).and_return("2")
           expect(subject).to receive(:puts).with("One of the numbers is 2, good luck ;)")
           subject.send(:give_hint)
@@ -252,7 +279,7 @@ require 'codebreaker'
       end
       context "when called second time" do
         it "tells that player can't see hint" do
-          subject.allow_hint = false
+          subject.instance_variable_set(:@allow_hint,false)
           expect(subject).to receive(:puts).with("You have alredy used your hint")
           subject.send(:give_hint)
         end

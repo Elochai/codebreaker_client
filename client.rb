@@ -1,61 +1,74 @@
 require 'codebreaker'
 class Client
-  attr_accessor :turns_made, :allow_hint, :output
-  attr_reader :turns, :game, :guess
+  attr_accessor :output
+  attr_reader :turns, :game, :guess, :input_code, :allow_hint, :turns_made
 
   def initialize
-    @output = {welcome: "Welcome to Codebreaker game!\nEnter command below:",
+    @output = {welcome: "Welcome to Codebreaker game!",
+      input: "Enter command below:",
       commands: "Type 'guess' to enter your code\nType 'hint' to reveal one random number of secret code\nType 'commands' to see all game commands\nType 'exit' or 'quit' to close this app"}
     @turns = 10
     @turns_made = 0
     @allow_hint = true
+    @input_code = false
     @game = Codebreaker::Game.new 
     @guess = Codebreaker::Guess.new
+    puts @output[:welcome]
   end
 
   def start
     if @game.valid?
       puts @output[:welcome]
-      enter_command
+      print
     else
       raise "Invalid generated code. Game will be closed..."
     end
+  end
+
+  def print
+    if @input_code
+        puts "Enter 4 numbers, each from 1 to 6 (#{@turns-@turns_made} turns remained):"
+        enter_code
+      else
+        puts @output[:input]
+        enter_command
+      end
   end
 
   def enter_command
     command = gets
     case command
       when /^guess$/
-        enter_code
+        @input_code = true
+        print
       when /^hint$/
         give_hint
-        enter_command
+        print
       when /^commands$/
         puts @output[:commands]
-        enter_command
+        print
        when /^exit$|^quit$/
         exit
       else
         puts "Wrong command!"
-        enter_command
+        print
     end
   end
 
   def enter_code
-      puts "Enter 4 numbers, each from 1 to 6 (#{@turns-@turns_made} turns remained):"
       guess_code = gets
       case guess_code
         when /^exit$|^quit$/
           exit
         when /^hint$/
           give_hint
-          enter_code
+          print
         when /^[1-6]{4}$/
           @game.guess_code = guess_code
           compare
         else
           puts "Can't understand..."
-          enter_code
+          print
       end
   end
 
@@ -83,6 +96,7 @@ class Client
         @game = Codebreaker::Game.new 
         @turns_made = 0
         @allow_hint = true
+        @from_enter_code = false
         start
       when /^n$|^no$/
         exit
